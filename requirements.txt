@@ -8,6 +8,7 @@ typing
 datetime
 email-validator
 cryptography
+psycopg2-binary
 python-jose~=3.5.0
 pydantic~=2.12.5
 python-dotenv~=1.2.1
