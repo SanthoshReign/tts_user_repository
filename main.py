@@ -431,7 +431,13 @@ def add_team(
     if existing:
         raise HTTPException(status_code=400, detail="Team already exist in given branch")
 
-    new_team = Team(team_name=team.team_name, description=team.description, branch=team.branch, status=team.status)
+    new_team = Team(
+        team_name=team.team_name,
+        description=team.description,
+        created_by = current_user.id,
+        branch=team.branch,
+        status=team.status
+    )
 
     db.add(new_team)
     db.commit()

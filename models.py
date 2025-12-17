@@ -35,6 +35,7 @@ class Team(Base):
     id = Column(Integer, primary_key = True, index = True)
     team_name = Column(String, unique = True, index = True)
     description = Column(String)
+    created_by = Column(Integer, ForeignKey("users_table.id"))
     branch = Column(String)
     status = Column(Boolean, default = True)
 
