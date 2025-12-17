@@ -189,7 +189,7 @@ def require_admin(
             detail= 'Admin privilesges required'
         )
 
-    user = db.quer(User).filter(User.id == user_id).first()
+    user = db.query(User).filter(User.id == user_id).first()
 
     if not user:
         raise HTTPException(
