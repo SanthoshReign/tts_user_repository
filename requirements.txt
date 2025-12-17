@@ -2,6 +2,12 @@ SQLAlchemy~=2.0.44
 PyJWT~=2.10.1
 passlib~=1.7.4
 fastapi~=0.123.9
+uvicorn
+pymysql
+typing
+datetime
+email-validator
+cryptography
 python-jose~=3.5.0
 pydantic~=2.12.5
 python-dotenv~=1.2.1

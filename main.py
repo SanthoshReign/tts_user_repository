@@ -7,8 +7,9 @@ from sqlalchemy.orm import Session
 
 from config import get_settings
 from db import Base, engine, SessionLocal
-from models import User, AuditLog
-from schemas import CreateUser, LoginUser, UserOut, SuccessMessage, GetUser, UpdateUser
+from models import User, AuditLog, Team
+from schemas import CreateUser, LoginUser, UserOut, SuccessMessage, GetUser, UpdateUser, AddTeam, TeamResponse, \
+    UpdateTeam
 from auth import hash_password, verify_password, create_token, create_reset_token, SECRET_KEY, ALGORITHM, decode_token
 
 from jose import jwt, JWTError
@@ -35,7 +36,7 @@ app.add_middleware(
 token_auth_scheme = HTTPBearer()
 
 # create table
-Base.metadata.create_all(bind = engine )
+Base.metadata.create_all(bind = engine)
 
 def getDb():
     db = SessionLocal()
@@ -165,6 +166,39 @@ def reset_password(token: str, new_password: str, db: Session = Depends(getDb)):
 # ------------------------------------------------------------
 # GET ALL USERS
 # ------------------------------------------------------------
+def require_admin(
+    credentials: HTTPAuthorizationCredentials = Depends(token_auth_scheme),
+    db: Session = Depends(getDb)
+):
+    # Allow access only if the authenticated user is an admin
+
+    payload = decode_token(credentials.credentials)
+
+    if not payload:
+        raise HTTPException(
+            status_code = 401,
+            detail = "Invalid or expired token"
+        )
+
+    user_id = payload.get('id')
+    role = payload.get('role')
+
+    if role.lower() != "admin":
+        raise HTTPException(
+            status_code = 403,
+            detail= 'Admin privilesges required'
+        )
+
+    user = db.quer(User).filter(User.id == user_id).first()
+
+    if not user:
+        raise HTTPException(
+            status_code = 404,
+            detail = "User not found"
+        )
+
+    return user
+
 
 @app.get('/get-all-users')
 def get_all_users_details(credentials: HTTPAuthorizationCredentials = Depends(token_auth_scheme) , db: Session = Depends(getDb)):
@@ -384,4 +418,54 @@ def restore_user(employee_id: int, credentials: HTTPAuthorizationCredentials = D
 
     return {"message": "User restored successfully"}
 
+# ----------------------------------------------------------------------------------------------------------------------------------------------------
+@app.post('/team/add-team', response_model = TeamResponse)
+def add_team(
+        team: AddTeam,
+        db: Session = Depends(getDb),
+        current_user = Depends(require_admin)   # only admin
+):
+    # check if the team name is already exist on the database
+    existing = db.query(Team).filter(Team.team_name == team.team_name and Team.branch == team.branch).first()
 
+    if existing:
+        raise HTTPException(status_code=400, detail="Team already exist in given branch")
+
+    new_team = Team(team_name=team.team_name, description=team.description, branch=team.branch, status=team.status)
+
+    db.add(new_team)
+    db.commit()
+    db.refresh(new_team)
+
+    return new_team
+
+# ---------------------------------------------------------------------------------------------------------------------------------------------
+
+@app.patch('/team/update-team/{team_id}')
+def update_team(team_id: int,
+                team_data: UpdateTeam = Body(...),
+                db: Session = Depends(getDb),
+                current_user = Depends(require_admin)
+):
+    team = db.query(Team).filter(Team.id == team_id).first()
+    if not team:
+        raise HTTPException(status_code = 404, detail = "Team not found")
+
+    updates = team_data.model_dump(exclude_unset=True)
+
+    if not updates:
+        return {"Message": "No updates"}
+
+    # change/update only needed fields
+    for field, value in updates.items():
+        setattr(team, field, value)
+
+    # allow only admins to change team, branch, role, active status of an employee
+
+    db.commit()
+    db.refresh(team)
+
+    return {
+        "message": "Update Successfully",
+        "Updated fields": list(updates.keys())
+    }

@@ -1,6 +1,9 @@
 from typing import Optional
 from pydantic import BaseModel, Field, EmailStr
 
+from enums import Branches
+
+
 # ----------------------- Input response Format ----------------
 # ----------- SignUp ---------------------
 class CreateUser(BaseModel):
@@ -21,6 +24,34 @@ class LoginUser(BaseModel):
 class UpdateUser(BaseModel):
     username: Optional[str] = None
     email: Optional[EmailStr] = None
+
+# ----------- Adding Team -----------------
+
+class AddTeam(BaseModel):
+    team_name: str
+    description: str
+    branch: Branches
+    status: bool
+
+# ----------- Update Team ------------------
+
+class UpdateTeam(BaseModel):
+    team_name: Optional[str] = None
+    description: Optional[str] = None
+    branch: Optional[Branches] = None
+    status: Optional[str] = None
+
+# ------------ Team Response ------------------
+
+class TeamResponse(BaseModel):
+    id: int
+    team_name: str
+    description: Optional[str]
+    branch: Branches
+    status: bool
+
+    class config:
+        from_attributes = True
 
 # --------------------- Output Response --------------------------
 class UserOut(BaseModel):
