@@ -91,7 +91,7 @@ def login(user: LoginUser, db: Session = Depends(getDb)):
     if not verify_password(user.password, db_user.password_hashed):
         raise HTTPException(status_code = 400, detail = "Invalid Password")
 
-    token = create_token({'sub': db_user.email, 'role': db_user.role})
+    token = create_token({'sub': db_user.email, 'user_id': db_user.id, 'role': db_user.role})
 
     return {
         "message" : "Login Successfully!",
