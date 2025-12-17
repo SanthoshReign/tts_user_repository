@@ -171,8 +171,8 @@ def require_admin(
     db: Session = Depends(getDb)
 ):
     # Allow access only if the authenticated user is an admin
-
-    payload = decode_token(credentials.credentials)
+    token = credentials.credentials
+    payload = decode_token(token)
 
     if not payload:
         raise HTTPException(
@@ -186,7 +186,7 @@ def require_admin(
     if role.lower() != "admin":
         raise HTTPException(
             status_code = 403,
-            detail= 'Admin privilesges required'
+            detail= 'Admin privileges required'
         )
 
     user = db.query(User).filter(User.id == user_id).first()
