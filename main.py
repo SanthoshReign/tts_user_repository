@@ -213,7 +213,7 @@ def get_all_users_details(credentials: HTTPAuthorizationCredentials = Depends(to
             raise HTTPException(status_code = 401, detail = "Token Expired")
 
 
-        if payload.get('role').lower() != "admin" or payload.get('role').lower() != 'superadmin':
+        if payload.get('role').lower() != "admin":
             raise HTTPException(status_code=403, detail="Unauthorised User")
 
         users = db.query(User).all()
