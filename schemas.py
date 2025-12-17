@@ -47,6 +47,7 @@ class TeamResponse(BaseModel):
     id: int
     team_name: str
     description: Optional[str]
+    created_by: int
     branch: Branches
     status: bool
 

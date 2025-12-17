@@ -166,39 +166,39 @@ def reset_password(token: str, new_password: str, db: Session = Depends(getDb)):
 # ------------------------------------------------------------
 # GET ALL USERS
 # ------------------------------------------------------------
-# def require_admin(
-#     credentials: HTTPAuthorizationCredentials = Depends(token_auth_scheme),
-#     db: Session = Depends(getDb)
-# ):
-#     # Allow access only if the authenticated user is an admin
-#     token = credentials.credentials
-#     payload = decode_token(token)
-#
-#     if not payload:
-#         raise HTTPException(
-#             status_code = 401,
-#             detail = "Invalid or expired token"
-#         )
-#
-#     user_id = payload.get('id')
-#     role = payload.get('role')
-#
-#     if role.lower() != "admin":
-#         raise HTTPException(
-#             status_code = 403,
-#             detail= 'Admin privileges required'
-#         )
-#
-#     user = db.query(User).filter(User.id == user_id).first()
-#
-#     if not user:
-#         raise HTTPException(
-#             status_code = 404,
-#             detail = "User not found"
-#         )
-#
-#     return user
-#
+def require_admin(
+    credentials: HTTPAuthorizationCredentials = Depends(token_auth_scheme),
+    db: Session = Depends(getDb)
+):
+    # Allow access only if the authenticated user is an admin
+    token = credentials.credentials
+    payload = decode_token(token)
+
+    if not payload:
+        raise HTTPException(
+            status_code = 401,
+            detail = "Invalid or expired token"
+        )
+
+    user_id = payload.get('id')
+    role = payload.get('role')
+
+    if role.lower() != "admin":
+        raise HTTPException(
+            status_code = 403,
+            detail= 'Admin privileges required'
+        )
+
+    user = db.query(User).filter(User.id == user_id).first()
+
+    if not user:
+        raise HTTPException(
+            status_code = 404,
+            detail = "User not found"
+        )
+
+    return user
+
 
 @app.get('/get-all-users')
 def get_all_users_details(credentials: HTTPAuthorizationCredentials = Depends(token_auth_scheme) , db: Session = Depends(getDb)):
@@ -213,7 +213,7 @@ def get_all_users_details(credentials: HTTPAuthorizationCredentials = Depends(to
             raise HTTPException(status_code = 401, detail = "Token Expired")
 
 
-        if payload.get('role').lower() != "admin" or 'superadmin':
+        if payload.get('role').lower() != "admin" or payload.get('role').lower() != 'superadmin':
             raise HTTPException(status_code=403, detail="Unauthorised User")
 
         users = db.query(User).all()
@@ -423,11 +423,8 @@ def restore_user(employee_id: int, credentials: HTTPAuthorizationCredentials = D
 def add_team(
         team: AddTeam,
         db: Session = Depends(getDb),
-        current_user = Depends(get_current_user())   # only admin
+        current_user = Depends(require_admin)   # only admin
 ):
-    if current_user.role != 'admin':
-        raise HTTPException(status_code = 403, detail = "Unauthorised User")
-
     # check if the team name is already exist on the database
     existing = db.query(Team).filter(Team.team_name == team.team_name and Team.branch == team.branch).first()
 
@@ -454,11 +451,8 @@ def add_team(
 def update_team(team_id: int,
                 team_data: UpdateTeam = Body(...),
                 db: Session = Depends(getDb),
-                current_user = Depends(get_current_user())
+                current_user = Depends(require_admin)
 ):
-    if current_user.role != 'admin':
-        raise HTTPException(status_code = 403, detail = "Unauthorised User")
-
     team = db.query(Team).filter(Team.id == team_id).first()
     if not team:
         raise HTTPException(status_code = 404, detail = "Team not found")
