@@ -174,6 +174,8 @@ def require_admin(
     token = credentials.credentials
     payload = decode_token(token)
 
+    print(payload)
+
     if not payload:
         raise HTTPException(
             status_code = 401,
