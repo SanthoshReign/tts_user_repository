@@ -424,9 +424,19 @@ def restore_user(employee_id: int, credentials: HTTPAuthorizationCredentials = D
 @app.post('/team/add-team', response_model = TeamResponse)
 def add_team(
         team: AddTeam,
+        credentials: HTTPAuthorizationCredentials = Depends(token_auth_scheme),
         db: Session = Depends(getDb),
-        current_user = Depends(require_admin)   # only admin
+        # current_user = Depends(require_admin)   # only admin
 ):
+    token = credentials.credentials
+    payload = decode_token(token)
+
+    if payload.get('role') != 'admin':
+        raise HTTPException(
+            status_code=403,
+            detail='Admin privileges required'
+        )
+
     # check if the team name is already exist on the database
     existing = db.query(Team).filter(Team.team_name == team.team_name and Team.branch == team.branch).first()
 
@@ -436,7 +446,7 @@ def add_team(
     new_team = Team(
         team_name=team.team_name,
         description=team.description,
-        created_by = current_user.id,
+        created_by = payload.id,
         branch=team.branch,
         status=team.status
     )
