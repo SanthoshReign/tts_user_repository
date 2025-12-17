@@ -82,8 +82,8 @@ def login(user: LoginUser, db: Session = Depends(getDb)):
     # check user email in the database first
     db_user = db.query(User).filter(User.email == user.email).first()
 
-    if not db_user.is_active:
-        raise HTTPException(status_code = 400, detail = "User has been deleted")
+    # if not db_user.is_active:
+    #     raise HTTPException(status_code = 400, detail = "User has been deleted")
 
     if not db_user:
         raise HTTPException(status_code = 400, detail = "Invalid Email")
