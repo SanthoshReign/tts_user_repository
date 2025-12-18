@@ -7,15 +7,18 @@ class User(Base):
     __tablename__ = "users_table"
 
     id = Column(Integer, primary_key = True, index = True)
-    username = Column(String, unique = True, index = True)
-    email = Column(String, unique = True, index = True)
-    password_hashed = Column(String)
-    branch = Column(String)
-    team = Column(String)
-    role = Column(String)
+    username = Column(String(50), unique = True, index = True)
+    email = Column(String(255), unique = True, index = True)
+    password_hashed = Column(String(256))
+    branch = Column(String(50))
+    team = Column(String(100))
+    role = Column(String(100))
     is_active = Column(Boolean, default = True)  # soft_delete
 
-    teams = relationship("Team", back_populates = "creator")
+    teams = relationship(
+        "Team",
+        back_populates = "creator"
+    )
 
 class AuditLog(Base):
     __tablename__ = "audit_logs"
@@ -35,8 +38,12 @@ class Team(Base):
     id = Column(Integer, primary_key = True, index = True)
     team_name = Column(String, unique = True, index = True)
     description = Column(String)
-    created_by = Column(Integer, ForeignKey("users_table.id"))
+    created_by = Column(Integer, ForeignKey("users_table.id"), nullable = False)
     branch = Column(String)
     status = Column(Boolean, default = True)
 
-    creator = relationship("User", back_populates = "teams")
+    # Foreign key to users.id
+    creator = relationship(
+        "User",
+        back_populates = "teams"
+    )

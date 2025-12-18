@@ -1,13 +1,13 @@
 from fastapi import FastAPI, Depends, HTTPException, Body
 from fastapi.security import OAuth2PasswordBearer, HTTPBearer, HTTPAuthorizationCredentials
-
+from models import User, AuditLog, Team
 from fastapi.middleware.cors import CORSMiddleware
 
 from sqlalchemy.orm import Session
 
 from config import get_settings
 from db import Base, engine, SessionLocal
-from models import User, AuditLog, Team
+
 from schemas import CreateUser, LoginUser, UserOut, SuccessMessage, GetUser, UpdateUser, AddTeam, TeamResponse, \
     UpdateTeam
 from auth import hash_password, verify_password, create_token, create_reset_token, SECRET_KEY, ALGORITHM, decode_token
@@ -35,7 +35,7 @@ app.add_middleware(
 # OAuth2_scheme = OAuth2PasswordBearer(tokenUrl = "login")
 token_auth_scheme = HTTPBearer()
 
-# create table
+# creating tables
 Base.metadata.create_all(bind = engine)
 
 def getDb():
@@ -431,7 +431,7 @@ def add_team(
     token = credentials.credentials
     payload = decode_token(token)
 
-    if payload.get('role') != 'admin':
+    if payload.get('role').lower() != 'admin':
         raise HTTPException(
             status_code=403,
             detail='Admin privileges required'
@@ -446,7 +446,7 @@ def add_team(
     new_team = Team(
         team_name=team.team_name,
         description=team.description,
-        created_by = payload.id,
+        created_by = payload.get('user_id'),
         branch=team.branch,
         status=team.status
     )
@@ -462,8 +462,7 @@ def add_team(
 @app.patch('/team/update-team/{team_id}')
 def update_team(team_id: int,
                 team_data: UpdateTeam = Body(...),
-                db: Session = Depends(getDb),
-                current_user = Depends(require_admin)
+                db: Session = Depends(getDb)
 ):
     team = db.query(Team).filter(Team.id == team_id).first()
     if not team:
